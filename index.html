@@ -1,142 +1,78 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>اختبار الدراع</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: 'Cairo', sans-serif;
-    }
-    .button-pressed {
-      background-color: #10b981;
-      transform: scale(1.1);
-    }
-    .stick {
-      width: 40px;
-      height: 40px;
-      background-color: #3b82f6;
-      border-radius: 50%;
-      position: absolute;
-      transition: all 0.1s ease;
-    }
-    .stick-container {
-      width: 80px;
-      height: 80px;
-      background-color: #1f2937;
-      border: 2px solid #4b5563;
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-      margin: 10px;
-    }
-  </style>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-2xl">
-    <h1 class="text-3xl font-bold text-center text-green-400 mb-4">اختبار الدراع</h1>
-    <p id="gamepad-status" class="text-center text-gray-400 mb-6">جاري البحث عن دراع...</p>
-    
-    <div class="grid grid-cols-2 gap-6">
-      <!-- قسم الأزرار -->
-      <div class="flex flex-col items-center">
-        <h2 class="text-xl font-semibold text-gray-300 mb-2">أزرار التحكم</h2>
-        <div id="buttons" class="grid grid-cols-4 gap-2 mb-4">
-          <!-- سيتم إضافة الأزرار ديناميكيًا -->
-        </div>
-      </div>
-      
-      <!-- قسم العصي -->
-      <div class="flex flex-col items-center">
-        <h2 class="text-xl font-semibold text-gray-300 mb-2">العصي التناظرية</h2>
-        <div class="flex gap-4">
-          <div class="stick-container">
-            <div id="left-stick" class="stick"></div>
-          </div>
-          <div class="stick-container">
-            <div id="right-stick" class="stick"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<script>
+  let gamepadIndex = null;
 
-  <script>
-    let gamepadIndex = null;
+  window.addEventListener("gamepadconnected", (e) => {
+    gamepadIndex = e.gamepad.index;
+    document.getElementById("gamepad-status").textContent = `تم العثور على دراع: ${e.gamepad.id} (أزرار: ${e.gamepad.buttons.length}, محاور: ${e.gamepad.axes.length})`;
+    console.log("Gamepad connected:", e.gamepad);
+    updateButtons(e.gamepad);
+  });
 
-    window.addEventListener("gamepadconnected", (e) => {
-      gamepadIndex = e.gamepad.index;
-      document.getElementById("gamepad-status").textContent = `تم العثور على دراع: ${e.gamepad.id} (أزرار: ${e.gamepad.buttons.length}, محاور: ${e.gamepad.axes.length})`;
-      console.log("Gamepad connected:", e.gamepad);
-      updateButtons(e.gamepad);
-    });
+  window.addEventListener("gamepaddisconnected", (e) => {
+    gamepadIndex = null;
+    document.getElementById("gamepad-status").textContent = "تم فصل الدراع. جاري البحث عن دراع...";
+    document.getElementById("buttons").innerHTML = "";
+  });
 
-    window.addEventListener("gamepaddisconnected", (e) => {
-      gamepadIndex = null;
-      document.getElementById("gamepad-status").textContent = "تم فصل الدراع. جاري البحث عن دراع...";
-      document.getElementById("buttons").innerHTML = "";
-    });
+  function updateButtons(gamepad) {
+    const buttonsContainer = document.getElementById("buttons");
+    buttonsContainer.innerHTML = "";
+    const buttonLabels = ['×', '○', '△', '□', 'L1', 'R1', 'L2', 'R2', 'Share', 'Options', 'L3', 'R3', 'Up', 'Down', 'Left', 'Right', 'Touchpad'];
+    for (let i = 0; i < Math.min(17, gamepad.buttons.length); i++) {
+      const button = document.createElement("div");
+      button.className = `w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gray-700`;
+      button.textContent = buttonLabels[i] || `B${i}`;
+      button.id = `button-${i}`;
+      buttonsContainer.appendChild(button);
+    }
+  }
 
-    function updateButtons(gamepad) {
-      const buttonsContainer = document.getElementById("buttons");
-      buttonsContainer.innerHTML = "";
-      const buttonLabels = ['×', '○', '△', '□', 'L1', 'R1', 'L2', 'R2', 'Share', 'Options', 'L3', 'R3', 'Up', 'Down', 'Left', 'Right', 'Touchpad'];
-      for (let i = 0; i < Math.min(17, gamepad.buttons.length); i++) {
-        const button = document.createElement("div");
-        button.className = `w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gray-700`;
-        button.textContent = buttonLabels[i] || `B${i}`;
-        button.id = `button-${i}`;
-        buttonsContainer.appendChild(button);
-      }
+  function updateGamepad() {
+    if (gamepadIndex === null) {
+      document.getElementById("gamepad-status").textContent = "لا يوجد دراع متصل. تأكد من التوصيل!";
+      return;
     }
 
-    function updateGamepad() {
-      if (gamepadIndex === null) {
-        document.getElementById("gamepad-status").textContent = "لا يوجد دراع متصل. تأكد من التوصيل!";
-        return;
-      }
+    const gamepad = navigator.getGamepads()[gamepadIndex];
+    if (!gamepad) {
+      document.getElementById("gamepad-status").textContent = "خطأ: الدراع غير متاح!";
+      return;
+    }
 
-      const gamepad = navigator.getGamepads()[gamepadIndex];
-      if (!gamepad) {
-        document.getElementById("gamepad-status").textContent = "خطأ: الدراع غير متاح!";
-        return;
-      }
-
-      // تحديث الأزرار
-      gamepad.buttons.forEach((button, index) => {
-        const buttonElement = document.getElementById(`button-${index}`);
-        if (buttonElement) {
-          const isPressed = button.value > 0.1;
-          buttonElement.classList.toggle("button-pressed", isPressed);
-          if (isPressed) {
-            console.log(`Button ${index} (${buttonElement.textContent}) pressed, Value: ${button.value.toFixed(2)}`);
-          }
+    // تحديث الأزرار
+    gamepad.buttons.forEach((button, index) => {
+      const buttonElement = document.getElementById(`button-${index}`);
+      if (buttonElement) {
+        const isPressed = button.value > 0.1; // تحسين للكشف
+        buttonElement.classList.toggle("button-pressed", isPressed);
+        if (isPressed) {
+          console.log(`Button ${index} (${buttonElement.textContent}) pressed, Value: ${button.value.toFixed(2)}`);
+        } else if (button.value > 0) {
+          console.log(`Button ${index} (${buttonElement.textContent}) partial press, Value: ${button.value.toFixed(2)}`);
         }
-      });
-
-      // تحديث المحاور (العصي)
-      const leftStick = document.getElementById("left-stick");
-      const rightStick = document.getElementById("right-stick");
-
-      if (gamepad.axes.length >= 4) {
-        const leftX = (gamepad.axes[0] + 1) * 20;
-        const leftY = (gamepad.axes[1] + 1) * 20;
-        const rightX = (gamepad.axes[2] + 1) * 20;
-        const rightY = (gamepad.axes[3] + 1) * 20;
-
-        leftStick.style.transform = `translate(${leftX}px, ${leftY}px)`;
-        rightStick.style.transform = `translate(${rightX}px, ${rightY}px)`;
-        console.log(`Axes: L(${gamepad.axes[0].toFixed(2)}, ${gamepad.axes[1].toFixed(2)}), R(${gamepad.axes[2].toFixed(2)}, ${gamepad.axes[3].toFixed(2)})`);
-      } else {
-        document.getElementById("gamepad-status").textContent = `تحذير: عدد المحاور (${gamepad.axes.length}) أقل من المتوقع!`;
       }
+    });
 
-      requestAnimationFrame(updateGamepad);
+    // تحديث المحاور (العصي)
+    const leftStick = document.getElementById("left-stick");
+    const rightStick = document.getElementById("right-stick");
+
+    if (gamepad.axes.length >= 4) {
+      const leftX = (gamepad.axes[0] + 1) * 20; // Left Stick X
+      const leftY = (-gamepad.axes[1] + 1) * 20; // Left Stick Y (عكس القيمة)
+      const rightX = (gamepad.axes[2] + 1) * 20; // Right Stick X
+      const rightY = (-gamepad.axes[3] + 1) * 20; // Right Stick Y (عكس القيمة)
+
+      leftStick.style.transform = `translate(${leftX - 20}px, ${leftY - 20}px)`; // مركز الصندوق
+      rightStick.style.transform = `translate(${rightX - 20}px, ${rightY - 20}px)`; // مركز الصندوق
+      console.log(`Axes: L(${gamepad.axes[0].toFixed(2)}, ${gamepad.axes[1].toFixed(2)}), R(${gamepad.axes[2].toFixed(2)}, ${gamepad.axes[3].toFixed(2)})`);
+    } else {
+      document.getElementById("gamepad-status").textContent = `تحذير: عدد المحاور (${gamepad.axes.length}) أقل من المتوقع!`;
     }
 
-    // بدء حلقة التحديث
     requestAnimationFrame(updateGamepad);
-  </script>
-</body>
-</html>
+  }
+
+  // بدء حلقة التحديث
+  requestAnimationFrame(updateGamepad);
+</script>
