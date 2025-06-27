@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اختبار الدراع</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+    }
+    .button-pressed {
+      background-color: #10b981;
+      transform: scale(1.1);
+    }
+    .stick {
+      width: 50px;
+      height: 50px;
+      background-color: #3b82f6;
+      border-radius: 50%;
+      position: absolute;
+      transition: all 0.1s ease;
+    }
+    .stick-container {
+      width: 100px;
+      height: 100px;
+      background-color: #e5e7eb;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+    <h1 class="text-3xl font-bold text-center text-blue-600 mb-4">اختبار الدراع</h1>
+    <p class="text-center text-gray-600 mb-6">قم بتوصيل الدراع بجهازك واضغط على الأزرار أو حرك المحاور لاختبارها!</p>
+    
+    <div id="gamepad-status" class="text-center text-gray-500 mb-4">جاري البحث عن دراع...</div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- قسم المحاور -->
+      <div class="flex flex-col items-center">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">المحاور</h2>
+        <div class="flex gap-4">
+          <div class="stick-container">
+            <div id="left-stick" class="stick"></div>
+          </div>
+          <div class="stick-container">
+            <div id="right-stick" class="stick"></div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">حرك العصا اليمنى واليسرى</p>
+      </div>
+      
+      <!-- قسم الأزرار -->
+      <div class="flex flex-col items-center">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">الأزرار</h2>
+        <div id="buttons" class="grid grid-cols-4 gap-2">
+          <!-- سيتم إضافة الأزرار ديناميكيًا -->
+        </div>
+        <p class="text-sm text-gray-500 mt-2">اضغط على أي زر لاختباره</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // جلب حالة الدراع
+    let gamepadIndex = null;
+
+    window.addEventListener("gamepadconnected", (e) => {
+      gamepadIndex = e.gamepad.index;
+      document.getElementById("gamepad-status").textContent = `تم العثور على دراع: ${e.gamepad.id}`;
+      updateButtons(e.gamepad);
+    });
+
+    window.addEventListener("gamepaddisconnected", (e) => {
+      gamepadIndex = null;
+      document.getElementById("gamepad-status").textContent = "تم فصل الدراع. جاري البحث عن دراع...";
+      document.getElementById("buttons").innerHTML = "";
+    });
+
+    // إنشاء عناصر الأزرار ديناميكيًا
+    function updateButtons(gamepad) {
+      const buttonsContainer = document.getElementById("buttons");
+      buttonsContainer.innerHTML = "";
+      gamepad.buttons.forEach((_, index) => {
+        const button = document.createElement("div");
+        button.className = "w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-semibold";
+        button.textContent = `B${index}`;
+        button.id = `button-${index}`;
+        buttonsContainer.appendChild(button);
+      });
+    }
+
+    // تحديث حالة الأزرار والمحاور
+    function updateGamepad() {
+      if (gamepadIndex === null) return;
+
+      const gamepad = navigator.getGamepads()[gamepadIndex];
+      if (!gamepad) return;
+
+      // تحديث الأزرار
+      gamepad.buttons.forEach((button, index) => {
+        const buttonElement = document.getElementById(`button-${index}`);
+        if (buttonElement) {
+          buttonElement.classList.toggle("button-pressed", button.pressed);
+        }
+      });
+
+      // تحديث المحاور (العصي)
+      const leftStick = document.getElementById("left-stick");
+      const rightStick = document.getElementById("right-stick");
+
+      if (gamepad.axes.length >= 4) {
+        const leftX = gamepad.axes[0] * 25 + 25; // تحويل [-1,1] إلى [0,50]
+        const leftY = gamepad.axes[1] * 25 + 25;
+        const rightX = gamepad.axes[2] * 25 + 25;
+        const rightY = gamepad.axes[3] * 25 + 25;
+
+        leftStick.style.transform = `translate(${leftX}px, ${leftY}px)`;
+        rightStick.style.transform = `translate(${rightX}px, ${rightY}px)`;
+      }
+
+      requestAnimationFrame(updateGamepad);
+    }
+
+    // بدء حلقة التحديث
+    requestAnimationFrame(updateGamepad);
+  </script>
+</body>
+</html>
